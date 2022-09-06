@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -14,14 +15,19 @@ import (
 )
 
 func main() {
+	httpClient := http.DefaultClient
+	httpClient.Timeout = 10 * time.Second
+
+	syncInterval := 10 * time.Second
+
 	svc := service.NewBeFirst(
 		map[string]service.PostsSource{
-			"uoi": uoi.NewCrawler(),
+			"uoi": uoi.NewCrawler(httpClient),
 		},
 		map[string]service.Notifier{
 			"telegram": telegram.NewClient(),
 		},
-		10*time.Second,
+		syncInterval,
 	)
 
 	wg := &sync.WaitGroup{}

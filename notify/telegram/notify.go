@@ -1,5 +1,7 @@
 package telegram
 
+import "fmt"
+
 type Client struct{}
 
 func NewClient() *Client {
@@ -7,5 +9,6 @@ func NewClient() *Client {
 }
 
 func (c *Client) SendMessage(msg string) error {
-	panic("todo")
+	fmt.Printf("TODO: Telegram Send: %s\n", msg)
+	return nil
 }

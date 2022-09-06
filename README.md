@@ -26,7 +26,7 @@ houses = [
 ]
 ```
 
-Then a variable called `last_post_id` will become `10` and nothing will happen.
+Then a set called `seen_posts` will be populated with `{10, 9}` and nothing will happen.
 
 After some time (duration is configured in settings) the service will fetch again the most recent listings:
 
@@ -39,5 +39,5 @@ houses = [
 ]
 ```
 
-1. Two notifications are sent for posts with id `12` and `11`.
-2. Then we see the post with id `10` which is the `last_post_id` so we stop and set `12` as the `last_post_id`.
+1. Two notifications are sent for posts with id `12` and `11` and posts marked as seen.
+2. Then we see an already seen post with id `10` so we stop.

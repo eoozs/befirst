@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/eoozs/befirst/set"
+
 	"github.com/eoozs/befirst/model"
 )
 
@@ -19,21 +21,27 @@ type Notifier interface {
 }
 
 type BeFirst struct {
-	postSources           map[string]PostsSource
-	postSourcesLastPostID map[string]string
-	notifiers             map[string]Notifier
-	interval              time.Duration
+	postSources          map[string]PostsSource
+	postSourcesSeenPosts map[string]set.Set[string]
+	notifiers            map[string]Notifier
+	interval             time.Duration
 }
 
 func NewBeFirst(
 	postSources map[string]PostsSource, notifiers map[string]Notifier, pollingInterval time.Duration,
 ) *BeFirst {
-	return &BeFirst{
-		postSources:           postSources,
-		postSourcesLastPostID: make(map[string]string),
-		notifiers:             notifiers,
-		interval:              pollingInterval,
+	svc := &BeFirst{
+		postSources:          postSources,
+		postSourcesSeenPosts: make(map[string]set.Set[string]),
+		notifiers:            notifiers,
+		interval:             pollingInterval,
 	}
+
+	for sourceID := range postSources {
+		svc.postSourcesSeenPosts[sourceID] = *set.New[string]()
+	}
+
+	return svc
 }
 
 func (b *BeFirst) Run(ctx context.Context, wg *sync.WaitGroup) {
@@ -70,12 +78,11 @@ func (b *BeFirst) run(ctx context.Context) {
 }
 
 func (b *BeFirst) runForPostsSource(ctx context.Context, postsSourceID string, ps PostsSource) error {
-	mostRecentPostID := ""
+	defer ps.Reset()
 
 	for {
 		select {
 		case <-ctx.Done():
-			ps.Reset()
 			return nil
 		default:
 			post, err := ps.Next()
@@ -83,14 +90,15 @@ func (b *BeFirst) runForPostsSource(ctx context.Context, postsSourceID string, p
 				return err
 			}
 
-			if mostRecentPostID == "" {
-				mostRecentPostID = post.ID
+			seenPosts := b.postSourcesSeenPosts[postsSourceID]
+			if seenPosts.Contains(post.ID) {
+				return nil
 			}
 
-			lastPostID := b.postSourcesLastPostID[postsSourceID]
-			if post.ID == lastPostID || lastPostID == "" {
-				b.postSourcesLastPostID[postsSourceID] = mostRecentPostID
-				break
+			seenPosts.Add(post.ID)
+			sz := seenPosts.Size()
+			if sz == 1 {
+				return nil
 			}
 
 			if err := b.notify(*post); err != nil {
