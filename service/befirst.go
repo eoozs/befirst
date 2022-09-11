@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eoozs/befirst/set"
+	"github.com/eoozs/befirst/pkg/set"
 
 	"github.com/eoozs/befirst/model"
 )

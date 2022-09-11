@@ -12,8 +12,8 @@ import (
 
 	"github.com/eoozs/befirst/config"
 	"github.com/eoozs/befirst/crawler/uoi"
-	"github.com/eoozs/befirst/env"
 	"github.com/eoozs/befirst/notify/telegram"
+	"github.com/eoozs/befirst/pkg/env"
 	"github.com/eoozs/befirst/service"
 )
 

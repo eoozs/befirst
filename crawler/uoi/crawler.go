@@ -9,7 +9,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/eoozs/befirst/model"
-	"github.com/eoozs/befirst/net"
+	"github.com/eoozs/befirst/pkg/net"
 )
 
 var ErrEnd = errors.New("end")
