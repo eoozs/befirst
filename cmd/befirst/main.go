@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -9,16 +10,29 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/eoozs/befirst/config"
 	"github.com/eoozs/befirst/crawler/uoi"
+	"github.com/eoozs/befirst/env"
 	"github.com/eoozs/befirst/notify/telegram"
 	"github.com/eoozs/befirst/service"
 )
 
-func main() {
-	httpClient := http.DefaultClient
-	httpClient.Timeout = 10 * time.Second
+type Config struct {
+	HttpClientTimeout time.Duration `json:"httpClientTimeout"`
+	SyncInterval      time.Duration `json:"syncInterval"`
+}
 
-	syncInterval := 10 * time.Second
+func main() {
+	var cfg Config
+	if err := config.LoadFromFile(
+		env.GetKey("CONFIG_DIR", "./config"),
+		env.GetKey("CONFIG_NAME", "default"),
+		&cfg); err != nil {
+		log.Fatalf("load config: %s", err)
+	}
+
+	httpClient := http.DefaultClient
+	httpClient.Timeout = cfg.HttpClientTimeout
 
 	svc := service.NewBeFirst(
 		map[string]service.PostsSource{
@@ -27,7 +41,7 @@ func main() {
 		map[string]service.Notifier{
 			"telegram": telegram.NewClient(),
 		},
-		syncInterval,
+		cfg.SyncInterval,
 	)
 
 	wg := &sync.WaitGroup{}

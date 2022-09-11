@@ -1,0 +1,2 @@
+httpClientTimeout: "15s"
+syncInterval: "30m"

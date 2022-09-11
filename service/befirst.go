@@ -48,14 +48,19 @@ func (b *BeFirst) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 	ticker := time.NewTicker(b.interval)
 
+	log.Println("running for first time")
+	b.run(ctx)
+	log.Println("finished")
+
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("befirst service gracefully stopped")
+			log.Println("service gracefully stopped")
 			return
 		case <-ticker.C:
 			log.Println("checking for new posts")
 			b.run(ctx)
+			log.Println("finished")
 		}
 	}
 }
