@@ -5,7 +5,6 @@ A simple service for getting alerted when there are new website posts.
 I built this while searching for a new home, but you can write a crawler 
 and use it for any website with similar structure.
 
-
 ## About Supported Websites
 
 Posts should be sorted descending based on creation date on the target website.
