@@ -1,2 +1,5 @@
 httpClientTimeout: "15s"
 syncInterval: "30m"
+storageFilePath: "./befirst.cache"
+telegramBotAPIUrl: "https://api.telegram.org"
+telegramBotToken: ""
