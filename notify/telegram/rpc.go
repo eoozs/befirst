@@ -59,7 +59,6 @@ func (c RPCApiWrapper) SendMessage(chatID int64, msg string) error {
 }
 
 func (c RPCApiWrapper) GetUpdates() ([]Update, error) {
-
 	resp, err := c.HTTPClient.Get(
 		c.buildURLOfFunc(rpcMethodGetUpdates),
 	)

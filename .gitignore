@@ -16,8 +16,5 @@ vendor/
 
 .idea/
 
-# some local tests
-temp_test.go
-
 # this is the file the storage is utilizing
 *.cache

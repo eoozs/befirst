@@ -19,13 +19,14 @@ import (
 	"github.com/eoozs/befirst/storage"
 )
 
-const (
-	storageFilePath = "/.befirst.cache"
-)
+
 
 type Config struct {
-	HttpClientTimeout time.Duration `json:"httpClientTimeout"`
-	SyncInterval      time.Duration `json:"syncInterval"`
+	HttpClientTimeout 	time.Duration 	`json:"httpClientTimeout"`
+	SyncInterval      	time.Duration 	`json:"syncInterval"`
+	StorageFilePath   	string 			`json:"storageFilePath"`
+	TelegramBotAPIUrl 	string			`json:"telegramBotAPIUrl"`
+	TelegramBotToken 	string			`json:"telegramBotToken"`
 }
 
 func main() {
@@ -68,57 +69,27 @@ func main() {
 	wg.Wait()
 }
 
-func initializeTelegramClient(httpClient *http.Client) (*telegram.Client, error) {
-	tgBotToken := os.Getenv("BEFIRST_TG_BOT_TOKEN")
-	if len(tgBotToken) == 0 {
+func initializeTelegramClient(httpClient *http.Client, conf Config) (*telegram.Client, error) {
+	if len(conf.TelegramBotToken) == 0 {
 		return nil, fmt.Errorf("no token provided")
 	}
 
-	file, err := openOrCreateFile(storageFilePath)
+	file, err := openOrCreateFile(conf.StorageFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open file: %v", err)
 	}
 
 	storageCl := storage.NewFSStorage(file)
 
-	persistedChatIDs, err := storageCl.GetTelegramChatIDs()
-	if err != nil {
-		return nil, fmt.Errorf("unable to get storage chat IDs: %v", err)
-	}
-
 	tgClient := telegram.NewClient(telegram.NewClientInput{
 		APIWrapper: telegram.NewRPCApiWrapper(
-			"https://api.telegram.org", tgBotToken, httpClient,
+			conf.TelegramBotAPIUrl, TelegramBotToken, httpClient,
 		),
-		InitialSubscribers: persistedChatIDs,
 	})
 
-	tgUpdates, err := tgClient.GetUpdates()
+	err = tgClient.Sync()
 	if err != nil {
-		return nil, fmt.Errorf("unable to get tg updates: %v", err)
-	}
-
-	for i := range tgUpdates {
-		chatID := tgUpdates[i].Message.Chat.ID
-
-		alreadySub, err := tgClient.HasSubscription(chatID)
-		if err != nil {
-			return nil, fmt.Errorf("unable to determine if chat subscribed: %v", err)
-		}
-
-		if alreadySub {
-			continue
-		}
-
-		err = tgClient.AddSubscription(chatID)
-		if err != nil {
-			return nil, fmt.Errorf("unable to add chat subscription: %v", err)
-		}
-
-		err = storageCl.PutTelegramChatID(chatID)
-		if err != nil {
-			return nil, fmt.Errorf("unable to persist chat subscription: %v", err)
-		}
+		return nil, fmt.Errorf("unable to call tg sync method: %v", err)
 	}
 
 	return tgClient, nil
