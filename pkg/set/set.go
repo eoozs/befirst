@@ -32,3 +32,11 @@ func (s *Set[T]) Contains(val T) bool {
 func (s *Set[T]) Size() int {
 	return len(s.values)
 }
+
+func (s *Set[T]) ToSlice() []T {
+	list := make([]T, 0, s.Size())
+	for val := range s.values {
+		list = append(list, val)
+	}
+	return list
+}
