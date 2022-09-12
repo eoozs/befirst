@@ -61,7 +61,7 @@ func (c *Crawler) crawlNextPage() error {
 		return fmt.Errorf("get %s: %w", url, err)
 	}
 
-	if err := c.parsePostsFromRespBody(resp.Body); err != nil {
+	if err := c.parsePostsFromRespBody(url, resp.Body); err != nil {
 		return err
 	}
 
@@ -69,7 +69,7 @@ func (c *Crawler) crawlNextPage() error {
 	return nil
 }
 
-func (c *Crawler) parsePostsFromRespBody(r io.Reader) error {
+func (c *Crawler) parsePostsFromRespBody(url string, r io.Reader) error {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
 		return fmt.Errorf("parse html body: %w", err)
@@ -85,6 +85,7 @@ func (c *Crawler) parsePostsFromRespBody(r io.Reader) error {
 		if i%2 == 0 {
 			currentPagePosts[i/2].Title = t
 			currentPagePosts[i/2].ID = strings.TrimSpace(strings.TrimPrefix(t, "Αριθμ. Αγγελίας:"))
+			currentPagePosts[i/2].URL = url
 		} else {
 			currentPagePosts[(i-1)/2].Title += " " + t // date
 		}

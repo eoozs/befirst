@@ -1,6 +1,10 @@
 package telegram
 
-import "github.com/eoozs/befirst/pkg/set"
+import (
+	"fmt"
+
+	"github.com/eoozs/befirst/pkg/set"
+)
 
 type Storage interface {
 	PutTelegramChatID(int64) error
@@ -10,30 +14,31 @@ type Storage interface {
 type Client struct {
 	subscribedChats set.Set[int64]
 	apiClient       APIWrapper
-	storage 		Storage
+	storage         Storage
 }
 
 type NewClientInput struct {
-	APIWrapper         APIWrapper
+	APIWrapper APIWrapper
 }
 
 func NewClient(apiWrapper APIWrapper, storage Storage) *Client {
 	return &Client{
-		subscribedChats: 	*set.New[int64](),
-		apiClient:       	input.APIWrapper,
-		storage:			storage,
+		subscribedChats: *set.New[int64](),
+		apiClient:       apiWrapper,
+		storage:         storage,
 	}
 }
 
 func (c *Client) Sync() error {
 	persistedChatIDs, err := c.storage.GetTelegramChatIDs()
 	if err != nil {
-		return nil, fmt.Errorf("unable to get storage chat IDs: %v", err)
+		return fmt.Errorf("unable to get storage chat IDs: %v", err)
 	}
+	c.subscribedChats.Add(persistedChatIDs...)
 
 	tgUpdates, err := c.GetUpdates()
 	if err != nil {
-		return nil, fmt.Errorf("unable to get tg updates: %v", err)
+		return fmt.Errorf("unable to get tg updates: %v", err)
 	}
 
 	for i := range tgUpdates {
@@ -41,7 +46,7 @@ func (c *Client) Sync() error {
 
 		alreadySub, err := c.HasSubscription(chatID)
 		if err != nil {
-			return nil, fmt.Errorf("unable to determine if chat subscribed: %v", err)
+			return fmt.Errorf("unable to determine if chat subscribed: %v", err)
 		}
 
 		if alreadySub {
@@ -50,12 +55,12 @@ func (c *Client) Sync() error {
 
 		err = c.AddSubscription(chatID)
 		if err != nil {
-			return nil, fmt.Errorf("unable to add chat subscription: %v", err)
+			return fmt.Errorf("unable to add chat subscription: %v", err)
 		}
 
 		err = c.storage.PutTelegramChatID(chatID)
 		if err != nil {
-			return nil, fmt.Errorf("unable to persist chat subscription: %v", err)
+			return fmt.Errorf("unable to persist chat subscription: %v", err)
 		}
 	}
 	return nil

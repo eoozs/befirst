@@ -19,14 +19,12 @@ import (
 	"github.com/eoozs/befirst/storage"
 )
 
-
-
 type Config struct {
-	HttpClientTimeout 	time.Duration 	`json:"httpClientTimeout"`
-	SyncInterval      	time.Duration 	`json:"syncInterval"`
-	StorageFilePath   	string 			`json:"storageFilePath"`
-	TelegramBotAPIUrl 	string			`json:"telegramBotAPIUrl"`
-	TelegramBotToken 	string			`json:"telegramBotToken"`
+	HttpClientTimeout time.Duration `json:"httpClientTimeout"`
+	SyncInterval      time.Duration `json:"syncInterval"`
+	StorageFilePath   string        `json:"storageFilePath"`
+	TelegramBotAPIUrl string        `json:"telegramBotAPIUrl"`
+	TelegramBotToken  string        `json:"telegramBotToken"`
 }
 
 func main() {
@@ -41,7 +39,7 @@ func main() {
 	httpClient := http.DefaultClient
 	httpClient.Timeout = cfg.HttpClientTimeout
 
-	tgClient, err := initializeTelegramClient(httpClient)
+	tgClient, err := initializeTelegramClient(httpClient, cfg)
 	if err != nil {
 		log.Fatalf("unable to initialize tg client: %v", err)
 	}
@@ -81,11 +79,10 @@ func initializeTelegramClient(httpClient *http.Client, conf Config) (*telegram.C
 
 	storageCl := storage.NewFSStorage(file)
 
-	tgClient := telegram.NewClient(telegram.NewClientInput{
-		APIWrapper: telegram.NewRPCApiWrapper(
-			conf.TelegramBotAPIUrl, TelegramBotToken, httpClient,
-		),
-	})
+	tgClient := telegram.NewClient(
+		telegram.NewRPCApiWrapper(conf.TelegramBotAPIUrl, conf.TelegramBotToken, httpClient),
+		storageCl,
+	)
 
 	err = tgClient.Sync()
 	if err != nil {
